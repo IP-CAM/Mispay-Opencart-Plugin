@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <name><![CDATA[MISPay Payment Gateway]]></name>
+    <version><![CDATA[1.0.2]]></version>
+    <code><![CDATA[Barion Payment Method]]></code>
+    <author><![CDATA[MISPay]]></author>
+    <link><![CDATA[https://mispay.co]]></link>
+   
+    <file path="catalog/controller/checkout/cart.php">
+        <operation>
+            <search><![CDATA[$this->response->setOutput($this->load->view('checkout/cart', $data));]]></search>
+            <add position="before"><![CDATA[
+        // Load MISPay widget if enabled
+        if ($this->config->get('payment_mispay_enable_widget')) {
+            $this->load->model('extension/payment/mispay');
+            $data['mispay_widget'] = $this->model_extension_payment_mispay->getWidget();
+        }
+            ]]></add>
+        </operation>
+    </file>
+    
+    <file path="catalog/view/theme/default/template/checkout/cart.twig">
+        <operation>
+            <search><![CDATA[<div class="row">]]></search>
+            <add position="after"><![CDATA[
+    {% if mispay_widget %}
+    <div class="mispay-widget-container" style="margin-bottom: 20px;">
+        {{ mispay_widget }}
+    </div>
+    {% endif %}
+            ]]></add>
+        </operation>
+    </file>
+    
+    <file path="catalog/controller/product/product.php">
+        <operation>
+            <search><![CDATA[$data['footer'] = $this->load->controller('common/footer');]]></search>
+            <add position="before"><![CDATA[
+        // Load MISPay widget if enabled
+        if ($this->config->get('payment_mispay_enable_widget')) {
+            $this->load->model('extension/payment/mispay');
+            $product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
+            $data['mispay_widget'] = $this->model_extension_payment_mispay->getProductWidget($product_id);
+        }
+            ]]></add>
+        </operation>
+    </file>
+    
+    <file path="catalog/view/theme/default/template/product/product.twig">
+        <operation>
+            <search><![CDATA[<input type="text" name="quantity" value="{{ minimum }}" size="2" id="input-quantity" class="form-control" />]]></search>
+            <add position="after"><![CDATA[
+    {% if mispay_widget %}
+    <div class="mispay-widget-container" style="margin-top: 15px; margin-bottom: 15px;">
+        {{ mispay_widget }}
+    </div>
+    {% endif %}
+            ]]></add>
+        </operation>
+    </file>
+</modification> 

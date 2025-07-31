@@ -1,0 +1,184 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <a href="{{ breadcrumbs[2].href }}" data-toggle="tooltip" title="Back to Order" class="btn btn-default"><i class="fa fa-reply"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-list"></i> Order #{{ order_id }} - MISPay Transaction Details</h3>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h4>Order Information</h4>
+            <table class="table table-bordered">
+              <tr>
+                <td><strong>Order ID:</strong></td>
+                <td>{{ order_id }}</td>
+              </tr>
+              <tr>
+                <td><strong>Customer:</strong></td>
+                <td>{{ order_info.firstname }} {{ order_info.lastname }}</td>
+              </tr>
+              <tr>
+                <td><strong>Total:</strong></td>
+                <td>{{ order_info.total }} {{ order_info.currency_code }}</td>
+              </tr>
+              <tr>
+                <td><strong>Status:</strong></td>
+                <td>{{ order_info.order_status }}</td>
+              </tr>
+              <tr>
+                <td><strong>Date Added:</strong></td>
+                <td>{{ order_info.date_added }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h4>MISPay Information</h4>
+            <table class="table table-bordered">
+              <tr>
+                <td><strong>Track ID:</strong></td>
+                <td>{{ track_id ? track_id : 'Not available' }}</td>
+              </tr>
+              <tr>
+                <td><strong>Payment Method:</strong></td>
+                <td>{{ order_info.payment_method }}</td>
+              </tr>
+              <tr>
+                <td><strong>Manual Tracking:</strong></td>
+                <td>
+                  <button type="button" id="button-track" class="btn btn-primary btn-sm">
+                    <i class="fa fa-refresh"></i> Track Payment
+                  </button>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        {% if webhook_data %}
+        <div class="row">
+          <div class="col-md-12">
+            <h4>Webhook Data</h4>
+            <div class="well">
+              <pre>{{ webhook_data|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+          <div class="col-md-12">
+            <h4>Transaction Logs</h4>
+            {% if logs %}
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Status</th>
+                    <th>Message</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for log in logs|reverse %}
+                  <tr>
+                    <td>{{ log.timestamp }}</td>
+                    <td>
+                      {% if log.status == 'success' %}
+                        <span class="label label-success">{{ log.status }}</span>
+                      {% elseif log.status == 'canceled' %}
+                        <span class="label label-warning">{{ log.status }}</span>
+                      {% elseif log.status == 'error' or log.status == 'timeout' %}
+                        <span class="label label-danger">{{ log.status }}</span>
+                      {% else %}
+                        <span class="label label-info">{{ log.status }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ log.message }}</td>
+                    <td>
+                      {% if log.details %}
+                      <button type="button" class="btn btn-xs btn-info" onclick="showDetails({{ loop.index0 }})">
+                        View Details
+                      </button>
+                      <div id="details-{{ loop.index0 }}" class="details-content" style="display: none; margin-top: 10px;">
+                        <div class="well">
+                          <pre>{{ log.details|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">No transaction logs available for this order.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+function showDetails(index) {
+  var detailsDiv = document.getElementById('details-' + index);
+  if (detailsDiv.style.display === 'none') {
+    detailsDiv.style.display = 'block';
+  } else {
+    detailsDiv.style.display = 'none';
+  }
+}
+
+$('#button-track').on('click', function() {
+  var button = $(this);
+  button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Tracking...');
+  
+  $.ajax({
+    url: 'index.php?route=extension/payment/mispay/trackOrder&user_token={{ user_token }}&order_id={{ order_id }}',
+    type: 'GET',
+    dataType: 'json',
+    success: function(json) {
+      if (json.success) {
+        alert('Payment tracking completed. Status: ' + json.status);
+        location.reload();
+      } else {
+        alert('Error: ' + json.error);
+      }
+    },
+    error: function() {
+      alert('An error occurred while tracking the payment.');
+    },
+    complete: function() {
+      button.prop('disabled', false).html('<i class="fa fa-refresh"></i> Track Payment');
+    }
+  });
+});
+</script>
+
+<style>
+.details-content {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+}
+</style>
+
+{{ footer }} 
