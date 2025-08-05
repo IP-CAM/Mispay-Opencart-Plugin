@@ -152,4 +152,17 @@ class ControllerExtensionPaymentMispay extends Controller {
         $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($json));
     }
+
+    public function getWidget() {
+        $this->load->model('extension/payment/mispay');
+        $widget_html = $this->model_extension_payment_mispay->getWidget();
+        $this->response->setOutput($widget_html);
+    }
+
+    public function getProductWidget() {
+        $this->load->model('extension/payment/mispay');
+        $product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
+        $widget_html = $this->model_extension_payment_mispay->getProductWidget($product_id);
+        $this->response->setOutput($widget_html);
+    }
 } 

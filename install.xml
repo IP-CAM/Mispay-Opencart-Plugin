@@ -6,25 +6,24 @@
     <author><![CDATA[MISPay]]></author>
     <link><![CDATA[https://mispay.co]]></link>
    
-    <file path="catalog/controller/checkout/cart.php">
+    <file path="catalog/controller/checkout/checkout.php">
         <operation>
-            <search><![CDATA[$this->response->setOutput($this->load->view('checkout/cart', $data));]]></search>
+            <search><![CDATA[$data['footer'] = $this->load->controller('common/footer');]]></search>
             <add position="before"><![CDATA[
         // Load MISPay widget if enabled
         if ($this->config->get('payment_mispay_enable_widget')) {
-            $this->load->model('extension/payment/mispay');
-            $data['mispay_widget'] = $this->model_extension_payment_mispay->getWidget();
+            $data['mispay_widget'] = $this->load->controller('extension/payment/mispay/getWidget');
         }
             ]]></add>
         </operation>
     </file>
     
-    <file path="catalog/view/theme/default/template/checkout/cart.twig">
+    <file path="catalog/view/theme/default/template/checkout/checkout.twig">
         <operation>
-            <search><![CDATA[<div class="row">]]></search>
-            <add position="after"><![CDATA[
+            <search><![CDATA[{{ footer }}]]></search>
+            <add position="before"><![CDATA[
     {% if mispay_widget %}
-    <div class="mispay-widget-container" style="margin-bottom: 20px;">
+    <div class="mispay-widget-container">
         {{ mispay_widget }}
     </div>
     {% endif %}
@@ -46,16 +45,49 @@
         </operation>
     </file>
     
-    <file path="catalog/view/theme/default/template/product/product.twig">
+    <file path="catalog/view/theme/*/template/product/product.twig" error="skip">
         <operation>
-            <search><![CDATA[<input type="text" name="quantity" value="{{ minimum }}" size="2" id="input-quantity" class="form-control" />]]></search>
-            <add position="after"><![CDATA[
+            <search><![CDATA[{% if options %}]]></search>
+            <add position="before"><![CDATA[
     {% if mispay_widget %}
     <div class="mispay-widget-container" style="margin-top: 15px; margin-bottom: 15px;">
         {{ mispay_widget }}
     </div>
+    {% else %}
+    <!-- MISPay Widget Debug: Widget is empty or disabled -->
+    {% endif %}
+            ]]></add>
+        </operation>
+     
+        
+    </file>
+   <file path="catalog/controller/checkout/cart.php">
+        <operation>
+            <search><![CDATA[$data['footer'] = $this->load->controller('common/footer');]]></search>
+            <add position="before"><![CDATA[
+        // Load MISPay widget if enabled
+        if ($this->config->get('payment_mispay_enable_widget')) {
+            $this->load->model('extension/payment/mispay');
+           
+            $data['mispay_widget'] = $this->model_extension_payment_mispay->getWidget();
+        }
+            ]]></add>
+        </operation>
+    </file>
+    
+    <file path="catalog/view/theme/*/template/checkout/cart.twig">
+        <operation>
+            <search><![CDATA[{{ button_shopping }}]]></search>
+            <add position="before" offset="1"><![CDATA[
+    {% if mispay_widget %}
+    <div class="mispay-widget-container" style="margin-top: 15px; margin-bottom: 15px;">
+        {{ mispay_widget }}
+    </div>
+    {% else %}
+    <!-- MISPay Widget Debug: Widget is empty or disabled -->
     {% endif %}
             ]]></add>
         </operation>
     </file>
+   
 </modification> 

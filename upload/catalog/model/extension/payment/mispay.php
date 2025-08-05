@@ -30,11 +30,14 @@ class ModelExtensionPaymentMispay extends Model
         $method_data = array();
 
         if ($status) {
-            // Get the current language
-            $current_language = $this->config->get('config_language');
+            // Get the current session language instead of admin config language
+            $current_language = isset($this->session->data['language']) ? $this->session->data['language'] : $this->config->get('config_language');
+            
+            // Improved language detection - check for Arabic language codes
+            $is_arabic = (strpos($current_language, 'ar') === 0); // Checks if language starts with 'ar'
             
             // Get title and description based on language
-            if ($current_language === 'ar') {
+            if ($is_arabic) {
                 $title = $this->config->get('payment_mispay_title_ar') ?: $this->language->get('text_title');
                 $description = $this->config->get('payment_mispay_description_ar') ?: $this->language->get('text_description');
             } else {
@@ -164,18 +167,20 @@ class ModelExtensionPaymentMispay extends Model
      * Get widget for cart page
      */
     public function getWidget()
-    {
+    {   
         if (!$this->config->get('payment_mispay_enable_widget')) {
             return '';
         }
-
+       
         $cart_total = 0;
+       
+        $products = $this->cart->getProducts();
         
-        if (isset($this->session->data['cart'])) {
-            foreach ($this->session->data['cart'] as $product_id => $quantity) {
-                $query = $this->db->query("SELECT price FROM " . DB_PREFIX . "product WHERE product_id = '" . (int)$product_id . "'");
+        if (count($products) > 0) {
+            foreach ($this->cart->getProducts() as $key => $product) {
+                $query = $this->db->query("SELECT price FROM " . DB_PREFIX . "product WHERE product_id = '" . (int)$product['product_id'] . "'");
                 if ($query->num_rows) {
-                    $cart_total += $query->row['price'] * $quantity;
+                    $cart_total += $query->row['price'] * $product['quantity'];
                 }
             }
         }
@@ -184,7 +189,11 @@ class ModelExtensionPaymentMispay extends Model
             return '';
         }
         
-        $lang = $this->config->get('config_language') === 'ar' ? 'ar' : 'en';
+        // Improved language detection - check for Arabic language codes
+        $current_language = isset($this->session->data['language']) ? $this->session->data['language'] : $this->config->get('config_language');
+        $is_arabic = (strpos($current_language, 'ar') === 0); // Checks if language starts with 'ar'
+        $lang = $is_arabic ? 'ar' : 'en';
+        
         $access_key = $this->config->get('payment_mispay_access_key');
         
         // Validate access key
@@ -224,7 +233,11 @@ class ModelExtensionPaymentMispay extends Model
             return '';
         }
         
-        $lang = $this->config->get('config_language') === 'ar' ? 'ar' : 'en';
+        // Improved language detection - check for Arabic language codes
+        $current_language = isset($this->session->data['language']) ? $this->session->data['language'] : $this->config->get('config_language');
+        $is_arabic = (strpos($current_language, 'ar') === 0); // Checks if language starts with 'ar'
+        $lang = $is_arabic ? 'ar' : 'en';
+        
         $price = $query->row['price'];
         $access_key = $this->config->get('payment_mispay_access_key');
         
@@ -244,10 +257,13 @@ class ModelExtensionPaymentMispay extends Model
         $is_test = $this->config->get('payment_mispay_test');
         $sdk_url = $is_test ? 'https://widget-sandbox.mispay.dev/v1/sdk.js' : 'https://widget.mispay.co/v1/sdk.js';
         
-        return '<div class="mispay-widget-container">
+        $widget_html = '<div class="mispay-widget-container">
             <mispay-widget amount="' . number_format($amount, 2, '.', '') . '" lang="' . $lang . '"></mispay-widget>
         </div>
         <script defer src="' . $sdk_url . '?authorize=' . htmlspecialchars($access_key) . '"></script>';
+        
+        error_log('MISPay Debug: Widget HTML generated successfully');
+        return $widget_html;
     }
 
     /**
