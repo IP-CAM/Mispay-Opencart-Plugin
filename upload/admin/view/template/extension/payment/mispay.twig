@@ -3,8 +3,8 @@
   <div class="page-header">
     <div class="container-fluid">
       <div class="pull-right">
-        <a href="{{ breadcrumbs[2].href }}" data-toggle="tooltip" title="Back to Order" class="btn btn-default"><i class="fa fa-reply"></i></a>
-      </div>
+        <button type="submit" form="form-payment" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
       <h1>{{ heading_title }}</h1>
       <ul class="breadcrumb">
         {% for breadcrumb in breadcrumbs %}
@@ -14,171 +14,225 @@
     </div>
   </div>
   <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title"><i class="fa fa-list"></i> Order #{{ order_id }} - MISPay Transaction Details</h3>
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
       </div>
       <div class="panel-body">
-        <div class="row">
-          <div class="col-md-6">
-            <h4>Order Information</h4>
-            <table class="table table-bordered">
-              <tr>
-                <td><strong>Order ID:</strong></td>
-                <td>{{ order_id }}</td>
-              </tr>
-              <tr>
-                <td><strong>Customer:</strong></td>
-                <td>{{ order_info.firstname }} {{ order_info.lastname }}</td>
-              </tr>
-              <tr>
-                <td><strong>Total:</strong></td>
-                <td>{{ order_info.total }} {{ order_info.currency_code }}</td>
-              </tr>
-              <tr>
-                <td><strong>Status:</strong></td>
-                <td>{{ order_info.order_status }}</td>
-              </tr>
-              <tr>
-                <td><strong>Date Added:</strong></td>
-                <td>{{ order_info.date_added }}</td>
-              </tr>
-            </table>
-          </div>
-          <div class="col-md-6">
-            <h4>MISPay Information</h4>
-            <table class="table table-bordered">
-              <tr>
-                <td><strong>Track ID:</strong></td>
-                <td>{{ track_id ? track_id : 'Not available' }}</td>
-              </tr>
-              <tr>
-                <td><strong>Payment Method:</strong></td>
-                <td>{{ order_info.payment_method }}</td>
-              </tr>
-              <tr>
-                <td><strong>Manual Tracking:</strong></td>
-                <td>
-                  <button type="button" id="button-track" class="btn btn-primary btn-sm">
-                    <i class="fa fa-refresh"></i> Track Payment
-                  </button>
-                </td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
-        {% if webhook_data %}
-        <div class="row">
-          <div class="col-md-12">
-            <h4>Webhook Data</h4>
-            <div class="well">
-              <pre>{{ webhook_data|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-
-        <div class="row">
-          <div class="col-md-12">
-            <h4>Transaction Logs</h4>
-            {% if logs %}
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover">
-                <thead>
-                  <tr>
-                    <th>Timestamp</th>
-                    <th>Status</th>
-                    <th>Message</th>
-                    <th>Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for log in logs|reverse %}
-                  <tr>
-                    <td>{{ log.timestamp }}</td>
-                    <td>
-                      {% if log.status == 'success' %}
-                        <span class="label label-success">{{ log.status }}</span>
-                      {% elseif log.status == 'canceled' %}
-                        <span class="label label-warning">{{ log.status }}</span>
-                      {% elseif log.status == 'error' or log.status == 'timeout' %}
-                        <span class="label label-danger">{{ log.status }}</span>
-                      {% else %}
-                        <span class="label label-info">{{ log.status }}</span>
-                      {% endif %}
-                    </td>
-                    <td>{{ log.message }}</td>
-                    <td>
-                      {% if log.details %}
-                      <button type="button" class="btn btn-xs btn-info" onclick="showDetails({{ loop.index0 }})">
-                        View Details
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal">
+          <ul class="nav nav-tabs">
+            <li class="active"><a href="#tab-api" data-toggle="tab">{{ tab_api }}</a></li>
+            <li><a href="#tab-general" data-toggle="tab">{{ tab_general }}</a></li>
+            <li><a href="#tab-widget" data-toggle="tab">{{ tab_widget }}</a></li>
+            <li><a href="#tab-localisation" data-toggle="tab">{{ tab_localisation }}</a></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane active" id="tab-api">
+              <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-app-id">{{ entry_app_id }}</label>
+                <div class="col-sm-10">
+                  <input type="text" name="payment_mispay_app_id" value="{{ payment_mispay_app_id }}" placeholder="{{ entry_app_id }}" id="input-app-id" class="form-control" />
+                  {% if error_app_id %}
+                  <div class="text-danger">{{ error_app_id }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-app-secret">{{ entry_app_secret }}</label>
+                <div class="col-sm-10">
+                  <input type="password" name="payment_mispay_app_secret" value="{{ payment_mispay_app_secret }}" placeholder="{{ entry_app_secret }}" id="input-app-secret" class="form-control" />
+                  {% if error_app_secret %}
+                  <div class="text-danger">{{ error_app_secret }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label">{{ entry_webhook_url }} <i class="fa fa-info-circle text-info"></i></label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <input type="text" value="{{ webhook_url }}" id="webhook-url" class="form-control webhook-url-field" readonly />
+                    <span class="input-group-btn">
+                      <button type="button" class="btn btn-success" onclick="copyWebhookUrl()">
+                        <i class="fa fa-copy"></i> {{ button_copy }}
                       </button>
-                      <div id="details-{{ loop.index0 }}" class="details-content" style="display: none; margin-top: 10px;">
-                        <div class="well">
-                          <pre>{{ log.details|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
-                        </div>
-                      </div>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+                    </span>
+                  </div>
+                  <small class="help-block"><i class="fa fa-lightbulb-o text-warning"></i> {{ help_webhook_url }}</small>
+                </div>
+              </div>
             </div>
-            {% else %}
-            <div class="alert alert-info">No transaction logs available for this order.</div>
-            {% endif %}
+            <div class="tab-pane" id="tab-general">
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+                <div class="col-sm-10">
+                  <select name="payment_mispay_status" id="input-status" class="form-control">
+                    {% if payment_mispay_status %}
+                    <option value="1" selected="selected">{{ text_enabled }}</option>
+                    <option value="0">{{ text_disabled }}</option>
+                    {% else %}
+                    <option value="1">{{ text_enabled }}</option>
+                    <option value="0" selected="selected">{{ text_disabled }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-test">{{ entry_test }}</label>
+                <div class="col-sm-10">
+                  <select name="payment_mispay_test" id="input-test" class="form-control">
+                    {% if payment_mispay_test %}
+                    <option value="1" selected="selected">{{ text_enabled }}</option>
+                    <option value="0">{{ text_disabled }}</option>
+                    {% else %}
+                    <option value="1">{{ text_enabled }}</option>
+                    <option value="0" selected="selected">{{ text_disabled }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-show-icon">{{ entry_show_icon }}</label>
+                <div class="col-sm-10">
+                  <select name="payment_mispay_show_icon" id="input-show-icon" class="form-control">
+                    {% if payment_mispay_show_icon %}
+                    <option value="1" selected="selected">{{ text_enabled }}</option>
+                    <option value="0">{{ text_disabled }}</option>
+                    {% else %}
+                    <option value="1">{{ text_enabled }}</option>
+                    <option value="0" selected="selected">{{ text_disabled }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-order-status">{{ entry_order_status }}</label>
+                <div class="col-sm-10">
+                  <select name="payment_mispay_order_status_id" id="input-order-status" class="form-control">
+                    {% for order_status in order_statuses %}
+                    {% if order_status.order_status_id == payment_mispay_order_status_id %}
+                    <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+                    {% else %}
+                    <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-geo-zone">{{ entry_geo_zone }}</label>
+                <div class="col-sm-10">
+                  <select name="payment_mispay_geo_zone_id" id="input-geo-zone" class="form-control">
+                    <option value="0">{{ text_all_zones }}</option>
+                    {% for geo_zone in geo_zones %}
+                    {% if geo_zone.geo_zone_id == payment_mispay_geo_zone_id %}
+                    <option value="{{ geo_zone.geo_zone_id }}" selected="selected">{{ geo_zone.name }}</option>
+                    {% else %}
+                    <option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-sort-order">{{ entry_sort_order }}</label>
+                <div class="col-sm-10">
+                  <input type="text" name="payment_mispay_sort_order" value="{{ payment_mispay_sort_order }}" placeholder="{{ entry_sort_order }}" id="input-sort-order" class="form-control" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-total">{{ entry_total }}</label>
+                <div class="col-sm-10">
+                  <input type="text" name="payment_mispay_total" value="{{ payment_mispay_total }}" placeholder="{{ entry_total }}" id="input-total" class="form-control" />
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="tab-widget">
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-enable-widget">{{ entry_enable_widget }}</label>
+                <div class="col-sm-10">
+                  <select name="payment_mispay_enable_widget" id="input-enable-widget" class="form-control">
+                    {% if payment_mispay_enable_widget %}
+                    <option value="1" selected="selected">{{ text_enabled }}</option>
+                    <option value="0">{{ text_disabled }}</option>
+                    {% else %}
+                    <option value="1">{{ text_enabled }}</option>
+                    <option value="0" selected="selected">{{ text_disabled }}</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-access-key">{{ entry_access_key }}</label>
+                <div class="col-sm-10">
+                  <input type="text" name="payment_mispay_access_key" value="{{ payment_mispay_access_key }}" placeholder="{{ entry_access_key }}" id="input-access-key" class="form-control" />
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="tab-localisation">
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-title-en">{{ entry_title_en }}</label>
+                <div class="col-sm-10">
+                  <input type="text" name="payment_mispay_title_en" value="{{ payment_mispay_title_en }}" placeholder="{{ entry_title_en }}" id="input-title-en" class="form-control" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-title-ar">{{ entry_title_ar }}</label>
+                <div class="col-sm-10">
+                  <input type="text" name="payment_mispay_title_ar" value="{{ payment_mispay_title_ar }}" placeholder="{{ entry_title_ar }}" id="input-title-ar" class="form-control" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-description-en">{{ entry_description_en }}</label>
+                <div class="col-sm-10">
+                  <textarea name="payment_mispay_description_en" placeholder="{{ entry_description_en }}" id="input-description-en" class="form-control">{{ payment_mispay_description_en }}</textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-description-ar">{{ entry_description_ar }}</label>
+                <div class="col-sm-10">
+                  <textarea name="payment_mispay_description_ar" placeholder="{{ entry_description_ar }}" id="input-description-ar" class="form-control">{{ payment_mispay_description_ar }}</textarea>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   </div>
 </div>
 
-<script type="text/javascript">
-function showDetails(index) {
-  var detailsDiv = document.getElementById('details-' + index);
-  if (detailsDiv.style.display === 'none') {
-    detailsDiv.style.display = 'block';
-  } else {
-    detailsDiv.style.display = 'none';
-  }
-}
-
-$('#button-track').on('click', function() {
-  var button = $(this);
-  button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Tracking...');
-  
-  $.ajax({
-    url: 'index.php?route=extension/payment/mispay/trackOrder&user_token={{ user_token }}&order_id={{ order_id }}',
-    type: 'GET',
-    dataType: 'json',
-    success: function(json) {
-      if (json.success) {
-        alert('Payment tracking completed. Status: ' + json.status);
-        location.reload();
-      } else {
-        alert('Error: ' + json.error);
-      }
-    },
-    error: function() {
-      alert('An error occurred while tracking the payment.');
-    },
-    complete: function() {
-      button.prop('disabled', false).html('<i class="fa fa-refresh"></i> Track Payment');
-    }
-  });
-});
-</script>
-
 <style>
-.details-content {
+.webhook-url-field {
   background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px;
+  border: 2px solid #ddd;
+  font-family: monospace;
+  font-size: 12px;
+}
+.webhook-url-field:focus {
+  border-color: #5cb85c;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(92, 184, 92, 0.6);
 }
 </style>
+
+<script type="text/javascript">
+function copyWebhookUrl() {
+  var webhookUrl = document.getElementById('webhook-url');
+  webhookUrl.select();
+  webhookUrl.setSelectionRange(0, 99999); // For mobile devices
+  
+  try {
+    document.execCommand('copy');
+    alert('{{ text_webhook_copied }}');
+  } catch (err) {
+    console.error('Failed to copy: ', err);
+    alert('{{ text_webhook_copy_failed }}');
+  }
+}
+</script>
 
 {{ footer }} 
