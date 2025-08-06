@@ -71,8 +71,8 @@ class ModelExtensionPaymentMispay extends Model {
         $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = 'payment_mispay', `key` = 'payment_mispay_access_key', `value` = ''");
         $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = 'payment_mispay', `key` = 'payment_mispay_title_en', `value` = 'Buy now then pay it later with MISpay'");
         $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = 'payment_mispay', `key` = 'payment_mispay_title_ar', `value` = 'اشتر الان وقسطها لاحقا مع MISpay'");
-        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = 'payment_mispay', `key` = 'payment_mispay_description_en', `value` = 'Split your purchase into 3 interest-free payments, No late fees. sharia-compliant'");
-        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = 'payment_mispay', `key` = 'payment_mispay_description_ar', `value` = 'قسم مشترياتك إلى 3 دفعات بدون فوائد، بدون رسوم تأخير متوافقة مع أحكام الشريعة الإسلامية'");
+        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = 'payment_mispay', `key` = 'payment_mispay_description_en', `value` = 'Split your purchase into 4 interest-free payments, No late fees. sharia-compliant'");
+        $this->db->query("INSERT INTO " . DB_PREFIX . "setting SET store_id = '0', `code` = 'payment_mispay', `key` = 'payment_mispay_description_ar', `value` = 'قسم مشترياتك إلى 4 دفعات بدون فوائد، بدون رسوم تأخير متوافقة مع أحكام الشريعة الإسلامية'");
     }
 
     /**
